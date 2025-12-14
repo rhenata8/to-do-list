@@ -1,5 +1,7 @@
+//
 import React, { useState } from 'react';
-import { Trash2, Plus } from 'lucide-react';
+// Hapus import ikon yang tidak digunakan
+// import { Trash2, Plus } from 'lucide-react'; 
 import TaskCard from './TaskCard';
 
 const Dashboard = ({ tasks, labels, onUpdateTask, onDeleteTask }) => {

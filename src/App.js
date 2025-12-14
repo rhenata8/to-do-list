@@ -6,7 +6,7 @@ import FilterPanel from './components/Filter';
 import ProgressChart from './components/ProgressChart';
 import AddTaskModal from './components/AddTaskModal';
 import AddLabelModal from './components/AddLabelModal';
-// import 'App.css';
+import './App.css';
 
 function App() {
   // State untuk tasks

@@ -1,3 +1,4 @@
+//
 import React, { useState } from 'react';
 import { X, Calendar } from 'lucide-react';
 
@@ -11,7 +12,8 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
     status: 'todo'
   });
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  // Hapus baris state showDatePicker yang tidak digunakan
+  // const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
