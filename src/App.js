@@ -9,7 +9,7 @@ import './App.css';
 
 function App() {
   // ==========================================
-  // 1. STATE INITIALIZATION (PERBAIKAN UTAMA)
+  // 1. STATE INITIALIZATION (LAZY LOADING)
   // ==========================================
   
   // State untuk tasks - Membaca localStorage langsung saat inisialisasi
@@ -28,7 +28,6 @@ function App() {
     const savedLabels = localStorage.getItem('flowrence_labels');
     try {
       return savedLabels ? JSON.parse(savedLabels) : [
-        // Default labels jika belum ada data tersimpan
         { id: 1, name: 'Tugas', color: '#3B82F6' },
         { id: 2, name: 'Pekerjaan', color: '#10B981' },
         { id: 3, name: 'Pribadi', color: '#F59E0B' }
