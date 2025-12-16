@@ -1,91 +1,60 @@
 import React from 'react';
 import { Trash2, Calendar } from 'lucide-react';
 
-const TaskCard = ({ task, labels, onDelete, onUpdate }) => {
-  const getTaskLabels = () => {
-    return task.labels.map(labelName => {
-      const label = labels.find(l => l.name === labelName);
-      return label;
-    }).filter(Boolean);
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
-  const getPriorityColor = (priority) => {
-    const colors = {
-      low: '#6B7280',
-      medium: '#F59E0B',
-      high: '#EF4444'
-    };
-    return colors[priority] || '#6B7280';
-  };
-
-  const getPriorityLabel = (priority) => {
-    const labels = {
-      low: 'Rendah',
-      medium: 'Sedang',
-      high: 'Tinggi'
-    };
-    return labels[priority] || priority;
-  };
-
-  const taskLabels = getTaskLabels();
+const TaskCard = ({ task, labels, onDelete }) => {
+  const priorityClass = `priority-${task.priority}`;
 
   return (
-    <div className="task-card">
+    <div className={`task-card ${priorityClass}`}>
       <div className="task-header">
         <h4 className="task-title">{task.title}</h4>
-        <button
-          className="btn-delete"
-          onClick={onDelete}
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            onDelete(); 
+          }}
+          className="btn-icon-delete"
           title="Hapus tugas"
         >
           <Trash2 size={16} />
         </button>
       </div>
-
+      
       {task.description && (
         <p className="task-description">{task.description}</p>
       )}
 
-      <div className="task-meta">
-        {taskLabels.length > 0 && (
-          <div className="task-labels">
-            {taskLabels.map(label => (
-              <span
-                key={label.id}
+      {task.labels.length > 0 && (
+        <div className="task-labels">
+          {task.labels.map((lbl, idx) => {
+            const labelObj = labels.find(l => l.name === lbl);
+            const color = labelObj ? labelObj.color : '#94A3B8';
+            return (
+              <span 
+                key={idx} 
                 className="label-badge"
-                style={{ backgroundColor: label.color }}
+                style={{
+                  backgroundColor: `${color}20`,
+                  color: color,
+                  borderLeft: `3px solid ${color}`
+                }}
               >
-                {label.name}
+                {lbl}
               </span>
-            ))}
-          </div>
-        )}
-
-        <div className="task-priority">
-          <span
-            className="priority-badge"
-            style={{ backgroundColor: getPriorityColor(task.priority) }}
-          >
-            {getPriorityLabel(task.priority)}
-          </span>
-        </div>
-      </div>
-
-      {task.dueDate && (
-        <div className="task-footer">
-          <Calendar size={14} />
-          <span>{formatDate(task.dueDate)}</span>
+            );
+          })}
         </div>
       )}
+
+      <div className="task-footer">
+        <div className="task-date">
+          <Calendar size={14} />
+          <span>{new Date(task.dueDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        </div>
+        <div className={`priority-badge priority-${task.priority}`}>
+          {task.priority === 'high' ? 'Tinggi' : task.priority === 'medium' ? 'Sedang' : 'Rendah'}
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,82 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Filter, X } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import CalendarView from './components/Calendar';
-import FilterPanel from './components/Filter';
 import ProgressChart from './components/ProgressChart';
 import AddTaskModal from './components/AddTaskModal';
 import AddLabelModal from './components/AddLabelModal';
 import './App.css';
 
 function App() {
-  // State untuk tasks
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: 'coba',
-      description: 'Ini adalah tugas pertama',
-      dueDate: '2026-02-23',
-      priority: 'medium',
-      labels: ['Tugas'],
-      status: 'todo'
+  // ==========================================
+  // 1. STATE INITIALIZATION (PERBAIKAN UTAMA)
+  // ==========================================
+  
+  // State untuk tasks - Membaca localStorage langsung saat inisialisasi
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem('flowrence_tasks');
+    try {
+      return savedTasks ? JSON.parse(savedTasks) : [];
+    } catch (e) {
+      console.error('Error parsing tasks:', e);
+      return [];
     }
-  ]);
+  });
 
-  // State untuk labels
-  const [labels, setLabels] = useState([
-    { id: 1, name: 'Tugas', color: '#3B82F6' },
-    { id: 2, name: 'Pekerjaan', color: '#10B981' },
-    { id: 3, name: 'Pribadi', color: '#F59E0B' }
-  ]);
+  // State untuk labels - Membaca localStorage langsung saat inisialisasi
+  const [labels, setLabels] = useState(() => {
+    const savedLabels = localStorage.getItem('flowrence_labels');
+    try {
+      return savedLabels ? JSON.parse(savedLabels) : [
+        // Default labels jika belum ada data tersimpan
+        { id: 1, name: 'Tugas', color: '#3B82F6' },
+        { id: 2, name: 'Pekerjaan', color: '#10B981' },
+        { id: 3, name: 'Pribadi', color: '#F59E0B' }
+      ];
+    } catch (e) {
+      return [
+        { id: 1, name: 'Tugas', color: '#3B82F6' },
+        { id: 2, name: 'Pekerjaan', color: '#10B981' },
+        { id: 3, name: 'Pribadi', color: '#F59E0B' }
+      ];
+    }
+  });
 
-  // State untuk filters
+  // ==========================================
+  // 2. STATE LAINNYA
+  // ==========================================
+
   const [filters, setFilters] = useState({
     labels: [],
     priority: [],
     dueDate: null
   });
 
-  // State untuk search
   const [searchQuery, setSearchQuery] = useState('');
-
-  // State untuk modal
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAddLabelModal, setShowAddLabelModal] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [currentView, setCurrentView] = useState('dashboard');
 
-  // State untuk current view
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'calendar', 'filter'
-
-  // Load data dari localStorage saat aplikasi dibuka
-  useEffect(() => {
-    const savedTasks = localStorage.getItem('kanban_tasks');
-    const savedLabels = localStorage.getItem('kanban_labels');
-
-    if (savedTasks) {
-      try {
-        setTasks(JSON.parse(savedTasks));
-      } catch (e) {
-        console.error('Error loading tasks:', e);
-      }
-    }
-
-    if (savedLabels) {
-      try {
-        setLabels(JSON.parse(savedLabels));
-      } catch (e) {
-        console.error('Error loading labels:', e);
-      }
-    }
-  }, []);
+  // ==========================================
+  // 3. EFFECTS (HANYA UNTUK SAVE)
+  // ==========================================
 
   // Save tasks ke localStorage setiap kali berubah
   useEffect(() => {
-    localStorage.setItem('kanban_tasks', JSON.stringify(tasks));
+    localStorage.setItem('flowrence_tasks', JSON.stringify(tasks));
   }, [tasks]);
 
   // Save labels ke localStorage setiap kali berubah
   useEffect(() => {
-    localStorage.setItem('kanban_labels', JSON.stringify(labels));
+    localStorage.setItem('flowrence_labels', JSON.stringify(labels));
   }, [labels]);
+
+  // ==========================================
+  // 4. LOGIC & HANDLERS
+  // ==========================================
 
   // Filter dan search tasks
   const getFilteredTasks = () => {
@@ -148,9 +146,30 @@ function App() {
     setShowAddLabelModal(false);
   };
 
-  // Handle filter change
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
+  // Handle label filter toggle
+  const handleLabelToggle = (labelName) => {
+    const newLabels = filters.labels.includes(labelName)
+      ? filters.labels.filter(l => l !== labelName)
+      : [...filters.labels, labelName];
+    setFilters({ ...filters, labels: newLabels });
+  };
+
+  // Handle priority filter toggle
+  const handlePriorityToggle = (priority) => {
+    const newPriorities = filters.priority.includes(priority)
+      ? filters.priority.filter(p => p !== priority)
+      : [...filters.priority, priority];
+    setFilters({ ...filters, priority: newPriorities });
+  };
+
+  // Handle date filter change
+  const handleDateChange = (e) => {
+    setFilters({ ...filters, dueDate: e.target.value || null });
+  };
+
+  // Handle clear filters
+  const handleClearFilters = () => {
+    setFilters({ labels: [], priority: [], dueDate: null });
   };
 
   // Hitung statistik progress
@@ -158,6 +177,10 @@ function App() {
   const completedTasks = filteredTasks.filter(t => t.status === 'done').length;
   const inProgressTasks = filteredTasks.filter(t => t.status === 'inprogress').length;
   const todoTasks = filteredTasks.filter(t => t.status === 'todo').length;
+
+  const todoPercentage = totalTasks > 0 ? Math.round((todoTasks / totalTasks) * 100) : 0;
+  const inProgressPercentage = totalTasks > 0 ? Math.round((inProgressTasks / totalTasks) * 100) : 0;
+  const donePercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Render content berdasarkan current view
   const renderContent = () => {
@@ -174,16 +197,8 @@ function App() {
       case 'calendar':
         return (
           <CalendarView
-            tasks={tasks}
+            tasks={filteredTasks}
             labels={labels}
-          />
-        );
-      case 'filter':
-        return (
-          <FilterPanel
-            labels={labels}
-            filters={filters}
-            onFilterChange={handleFilterChange}
           />
         );
       default:
@@ -191,39 +206,15 @@ function App() {
     }
   };
 
-  // Render active filters info
-  const renderActiveFilters = () => {
-    const activeFilters = [];
-
-    if (filters.labels.length > 0) {
-      activeFilters.push(`Label: ${filters.labels.join(', ')}`);
-    }
-
-    if (filters.priority.length > 0) {
-      const priorityLabels = {
-        low: 'Rendah',
-        medium: 'Sedang',
-        high: 'Tinggi'
-      };
-      const priorityText = filters.priority.map(p => priorityLabels[p]).join(', ');
-      activeFilters.push(`Prioritas: ${priorityText}`);
-    }
-
-    if (filters.dueDate) {
-      activeFilters.push(`Deadline: ${new Date(filters.dueDate).toLocaleDateString('id-ID')}`);
-    }
-
-    return activeFilters;
-  };
-
-  const activeFilters = renderActiveFilters();
+  const hasActiveFilters = filters.labels.length > 0 || filters.priority.length > 0 || filters.dueDate;
 
   return (
     <div className="app-container">
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1 className="sidebar-title">Kanban To-Do List</h1>
+          <h1 className="sidebar-title">Flowrence</h1>
+          <p className="sidebar-subtitle">Task Management</p>
         </div>
 
         {/* Search */}
@@ -244,62 +235,41 @@ function App() {
             className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
             onClick={() => setCurrentView('dashboard')}
           >
-            <span className="nav-icon">📊</span>
             Dashboard
           </button>
           <button
             className={`nav-item ${currentView === 'calendar' ? 'active' : ''}`}
             onClick={() => setCurrentView('calendar')}
           >
-            <span className="nav-icon">📅</span>
             Kalender
           </button>
-          <button
-            className={`nav-item ${currentView === 'filter' ? 'active' : ''}`}
-            onClick={() => setCurrentView('filter')}
-          >
-            <span className="nav-icon">🔍</span>
-            Filter
-          </button>
         </nav>
-
-        {/* Active Filters Info */}
-        {activeFilters.length > 0 && (
-          <div className="active-filters">
-            <h3>Filter Aktif</h3>
-            {activeFilters.map((filter, index) => (
-              <div key={index} className="filter-section">
-                <p className="filter-label">{filter}</p>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Progress Section */}
         <div className="progress-section">
           <h3>Progress Tugas</h3>
           <ProgressChart
             total={totalTasks}
-            completed={completedTasks}
-            inProgress={inProgressTasks}
-            todo={todoTasks}
+            todoPercentage={todoPercentage}
+            inProgressPercentage={inProgressPercentage}
+            donePercentage={donePercentage}
           />
 
           <div className="progress-stats">
             <div className="stat">
               <span className="stat-dot" style={{ backgroundColor: '#EF4444' }}></span>
               To Do
-              <strong>{todoTasks}</strong>
+              <strong>{todoTasks} ({todoPercentage}%)</strong>
             </div>
             <div className="stat">
               <span className="stat-dot" style={{ backgroundColor: '#F59E0B' }}></span>
               In Progress
-              <strong>{inProgressTasks}</strong>
+              <strong>{inProgressTasks} ({inProgressPercentage}%)</strong>
             </div>
             <div className="stat">
               <span className="stat-dot" style={{ backgroundColor: '#10B981' }}></span>
               Done
-              <strong>{completedTasks}</strong>
+              <strong>{completedTasks} ({donePercentage}%)</strong>
             </div>
           </div>
 
@@ -312,22 +282,103 @@ function App() {
 
       {/* Main Content */}
       <main className="main-content">
-        {/* Header */}
         <header className="main-header">
           <div className="header-title">
             <h2>
               {currentView === 'dashboard' && 'Dashboard'}
               {currentView === 'calendar' && 'Kalender Tugas'}
-              {currentView === 'filter' && 'Filter Tugas'}
             </h2>
             <p>
-              {currentView === 'dashboard' && 'Kelola tugas Anda dengan sistem Kanban'}
+              {currentView === 'dashboard' && 'Kelola tugas Anda dengan efisien'}
               {currentView === 'calendar' && 'Lihat semua tugas Anda dalam kalender'}
-              {currentView === 'filter' && 'Filter tugas berdasarkan kriteria Anda'}
             </p>
           </div>
 
           <div className="header-actions">
+            {/* Filter Dropdown Button */}
+            <div className="filter-dropdown-container">
+              <button
+                className={`btn-filter ${hasActiveFilters ? 'active' : ''}`}
+                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              >
+                <Filter size={18} />
+                Filter
+                {hasActiveFilters && <span className="filter-badge">{filters.labels.length + filters.priority.length + (filters.dueDate ? 1 : 0)}</span>}
+              </button>
+
+              {/* Filter Dropdown */}
+              {showFilterDropdown && (
+                <div className="filter-dropdown">
+                  <div className="filter-dropdown-header">
+                    <h3>Filter Tugas</h3>
+                    <button className="btn-close" onClick={() => setShowFilterDropdown(false)}>
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="filter-dropdown-content">
+                    {/* Label Filter */}
+                    <div className="filter-section">
+                      <h4>Label</h4>
+                      <div className="filter-options">
+                        {labels.map(label => (
+                          <label key={label.id} className="filter-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={filters.labels.includes(label.name)}
+                              onChange={() => handleLabelToggle(label.name)}
+                            />
+                            <span className="checkbox-label" style={{ color: label.color }}>
+                              ● {label.name}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Priority Filter */}
+                    <div className="filter-section">
+                      <h4>Prioritas</h4>
+                      <div className="filter-options">
+                        {[
+                          { value: 'low', label: 'Rendah' },
+                          { value: 'medium', label: 'Sedang' },
+                          { value: 'high', label: 'Tinggi' }
+                        ].map(option => (
+                          <label key={option.value} className="filter-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={filters.priority.includes(option.value)}
+                              onChange={() => handlePriorityToggle(option.value)}
+                            />
+                            <span className="checkbox-label">{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Date Filter */}
+                    <div className="filter-section">
+                      <h4>Deadline Hingga</h4>
+                      <input
+                        type="date"
+                        value={filters.dueDate || ''}
+                        onChange={handleDateChange}
+                        className="date-input"
+                      />
+                    </div>
+
+                    {/* Clear Filters Button */}
+                    {hasActiveFilters && (
+                      <button className="btn-clear-filters" onClick={handleClearFilters}>
+                        Hapus Semua Filter
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               className="btn-secondary"
               onClick={() => setShowAddLabelModal(true)}
@@ -344,7 +395,6 @@ function App() {
           </div>
         </header>
 
-        {/* Content Area */}
         <div className="content-area">
           {renderContent()}
         </div>
@@ -369,4 +419,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;""

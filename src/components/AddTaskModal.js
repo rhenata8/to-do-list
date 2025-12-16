@@ -1,4 +1,3 @@
-//
 import React, { useState } from 'react';
 import { X, Calendar } from 'lucide-react';
 
@@ -11,9 +10,6 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
     labels: [],
     status: 'todo'
   });
-
-  // Hapus baris state showDatePicker yang tidak digunakan
-  // const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,17 +35,18 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
     }));
   };
 
-  const handleDateChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      dueDate: e.target.value
-    }));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (formData.title.trim()) {
+    if (formData.title.trim() && formData.dueDate) {
       onSubmit(formData);
+      setFormData({
+        title: '',
+        description: '',
+        dueDate: '',
+        priority: 'medium',
+        labels: [],
+        status: 'todo'
+      });
     }
   };
 
@@ -64,7 +61,6 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form">
-          {/* Judul */}
           <div className="form-group">
             <label>Judul *</label>
             <input
@@ -77,7 +73,6 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
             />
           </div>
 
-          {/* Deskripsi */}
           <div className="form-group">
             <label>Deskripsi</label>
             <textarea
@@ -89,7 +84,6 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
             />
           </div>
 
-          {/* Due Date */}
           <div className="form-group">
             <label>Due Date *</label>
             <div className="date-input-wrapper">
@@ -98,13 +92,12 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
                 type="date"
                 name="dueDate"
                 value={formData.dueDate}
-                onChange={handleDateChange}
+                onChange={handleChange}
                 required
               />
             </div>
           </div>
 
-          {/* Prioritas */}
           <div className="form-group">
             <label>Prioritas *</label>
             <div className="priority-buttons">
@@ -125,9 +118,8 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
             </div>
           </div>
 
-          {/* Label */}
           <div className="form-group">
-            <label>Label *</label>
+            <label>Label</label>
             <div className="label-buttons">
               {labels.map(label => (
                 <button
@@ -146,7 +138,6 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
             </div>
           </div>
 
-          {/* Status Awal */}
           <div className="form-group">
             <label>Status Awal</label>
             <select
@@ -161,7 +152,6 @@ const AddTaskModal = ({ labels, onClose, onSubmit }) => {
             </select>
           </div>
 
-          {/* Buttons */}
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Batal
